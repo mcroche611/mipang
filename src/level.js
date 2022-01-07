@@ -1,4 +1,5 @@
-import Platform from './platform.js';
+import Bubble from './bubble.js';
+import Wall from './wall.js';
 import Player from './player.js';
 
 /**
@@ -15,22 +16,93 @@ export default class Level extends Phaser.Scene {
    */
   constructor() {
     super({ key: 'level' });
+    this.NUM_CIRCLES = 10;
   }
 
   /**
    * Creación de los elementos de la escena principal de juego
    */
-  create() {
+  create() 
+  {
     this.stars = 10;
     this.bases = this.add.group();
-    this.player = new Player(this, 200, 300);
+    this.player = new Player(this, 200, 500);
+    this.wall = this.add.rectangle(20, 0, 2000, 10, 0xff0000);
+    this.add.existing(this.wall);
+    this.physics.add.existing(this.wall);
 
-    new Platform(this, this.player, this.bases, 150, 350);
-    new Platform(this, this.player, this.bases, 850, 350);
-    new Platform(this, this.player, this.bases, 500, 200);
-    new Platform(this, this.player, this.bases, 150, 100);
-    new Platform(this, this.player, this.bases, 850, 100);
-    this.spawn();
+    this.bubbles = this.add.group();
+
+    for (let i = 0; i < this.NUM_CIRCLES; i++) {
+      let x = this.getRandomInt(0.10, 900);
+      let y = this.getRandomInt(0.15, 350);
+      let bubble = new Bubble(this, x, y);
+
+      this.bubbles.add(bubble);
+    }
+
+    this.hooks = this.add.group();
+  }
+
+    //Crea objetos dinamicos con el metodo add.group
+    createRandomBalls(){
+    
+      console.log('createRandomBalls starting');
+      let { width, height } = this.sys.game.canvas;
+      this.balls =  this.physics.add.group({
+        key: 'aqua_ball',
+        repeat: 20,
+        allowGravity: true,
+        collideWorldBounds: true,
+        setXY: { x: 100, y: 150, stepX: 120}
+        });
+        //añadimos el collider al grupo
+        this.physics.add.collider(this.player, this.balls, this.collisionCallback);  
+  
+        //recorremos el grupo y ponemos posiciones aleatorias
+        this.balls.children.iterate( child => {
+              child.setName('gota');
+              child.setPosition(Phaser.Math.RND.between(0,width), Phaser.Math.RND.between(0,height/2))})    
+                      
+    }
+  
+    collisionCallback(obj1, obj2) 
+    {
+      let gr= obj1.scene.balls;
+      if (gr.contains(obj1))
+      {
+        gr.remove(obj1, true, true); 
+      }
+      else if (gr.contains(obj2))
+      {
+          gr.remove(obj2, true, true); 
+      }
+  
+  
+      /*
+      if (obj1.name == 'gota')
+      {
+        this.balls.remove(obj1, true, true);
+      }
+      else  if (obj2.name == 'gota')
+      {
+        obj2.scene.balls.remove(obj2, true, true);
+      }
+      if (obj1.name == 'player')
+      {
+        obj1.destroy();
+      }
+      else  if (obj2.name == 'player')
+      {
+        obj2.destroy();
+      }
+  */
+    }
+
+  getRandomInt(min, max) 
+  {
+    let num = Math.random();
+    return Math.floor((num + min) * max);
   }
 
   /**
